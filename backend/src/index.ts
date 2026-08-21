@@ -4,7 +4,7 @@ import cors from "cors";
 import { config } from "./config/env";
 import { testConnection } from "./config/db";
 import { errorHandler } from "./middleware/errorHandler";
-
+import statsRoutes from "./routes/statsRoutes";
 import campaignRoutes from "./routes/campaignRoutes";
 import emailRoutes from "./routes/emailRoutes";
 import testRoutes from "./routes/testRoutes";
@@ -26,7 +26,7 @@ app.get("/health", (_req, res) => {
 app.use("/api/campaigns", campaignRoutes);
 app.use("/api/emails", emailRoutes);
 
-
+app.use("/api/stats", statsRoutes);
 app.use("/api/test", testRoutes);
 
 // ERROR HANDLER MUST BE LAST

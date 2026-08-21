@@ -43,6 +43,10 @@ export const config = {
         "WORKER_CONCURRENCY"
     ),
 
+    maxEmailsPerHour: requirePositiveInteger(
+        "MAX_EMAILS_PER_HOUR"
+    ),
+
     spawner: {
         intervalSeconds: requirePositiveInteger(
             "SPAWNER_INTERVAL_SECONDS"
