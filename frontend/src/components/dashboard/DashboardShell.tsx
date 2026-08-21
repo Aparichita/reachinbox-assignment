@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ComposeEmail from "@/components/dashboard/ComposeEmail";
 import Sidebar, {
   type DashboardTab,
 } from "@/components/dashboard/Sidebar";
@@ -19,9 +20,12 @@ type DashboardShellProps = {
   };
 };
 
+type DashboardView = "list" | "compose";
+
 export default function DashboardShell({
   user,
 }: DashboardShellProps) {
+  const [view, setView] = useState<DashboardView>("list");
   const [activeTab, setActiveTab] = useState<DashboardTab>("scheduled");
   const scheduled = useEmails("scheduled", {
     active: activeTab === "scheduled",
@@ -45,32 +49,59 @@ export default function DashboardShell({
     }
   };
 
+  const handleComposeSuccess = async () => {
+    setView("list");
+    setActiveTab("scheduled");
+    await scheduled.refetch();
+    showToast({
+      type: "success",
+      message: "Email campaign scheduled successfully",
+    });
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-[#f7f7f5] lg:flex-row">
       <Sidebar
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(tab) => {
+          setView("list");
+          setActiveTab(tab);
+        }}
+        onCompose={() => setView("compose")}
         scheduledCount={scheduled.total}
         sentCount={sent.total}
         user={user}
       />
       <main className="min-w-0 flex-1">
-        <TopBar
-          onRefresh={() => void handleRefresh()}
-          refreshing={activeState.loading && activeState.data.length > 0}
-        />
-        <div className="p-6 lg:p-8">
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-xs text-zinc-400">
-              {formatLastSyncedAt(activeState.lastSyncedAt)}
-            </p>
-          </div>
-          {activeTab === "scheduled" ? (
-            <ScheduledEmails state={scheduled} />
-          ) : (
-            <SentEmails state={sent} />
-          )}
-        </div>
+        {view === "compose" ? (
+          <ComposeEmail
+            userEmail={user.email ?? ""}
+            onBack={() => setView("list")}
+            onSuccess={handleComposeSuccess}
+            onError={(message) =>
+              showToast({ type: "error", message })
+            }
+          />
+        ) : (
+          <>
+            <TopBar
+              onRefresh={() => void handleRefresh()}
+              refreshing={activeState.loading && activeState.data.length > 0}
+            />
+            <div className="p-6 lg:p-8">
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-xs text-zinc-400">
+                  {formatLastSyncedAt(activeState.lastSyncedAt)}
+                </p>
+              </div>
+              {activeTab === "scheduled" ? (
+                <ScheduledEmails state={scheduled} />
+              ) : (
+                <SentEmails state={sent} />
+              )}
+            </div>
+          </>
+        )}
       </main>
     </div>
   );

@@ -22,3 +22,29 @@ export interface PaginatedResponse<T> {
   page: number;
   limit: number;
 }
+
+export interface CreateCampaignRequest {
+  user_email: string;
+  sender_email: string;
+  subject: string;
+  body: string;
+  recipients: string[];
+  start_time: string;
+  delay_seconds: number;
+  hourly_limit: number;
+}
+
+export interface CreateCampaignResponse {
+  id: number;
+  user_email: string;
+  sender_email: string;
+  subject: string;
+  body: string;
+  start_time: string;
+  delay_seconds: number;
+  hourly_limit: number;
+  total_recipients: number;
+  status: "active" | "paused" | "completed";
+  created_at: string;
+  updated_at: string;
+}

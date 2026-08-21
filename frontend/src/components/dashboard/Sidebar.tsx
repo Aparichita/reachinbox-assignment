@@ -15,6 +15,7 @@ export type DashboardTab = "scheduled" | "sent";
 type SidebarProps = {
   activeTab: DashboardTab;
   onTabChange: (tab: DashboardTab) => void;
+  onCompose: () => void;
   scheduledCount: number;
   sentCount: number;
   user: {
@@ -40,6 +41,7 @@ function getInitial(user: SidebarProps["user"]): string {
 export default function Sidebar({
   activeTab,
   onTabChange,
+  onCompose,
   scheduledCount,
   sentCount,
   user,
@@ -145,6 +147,7 @@ export default function Sidebar({
 
       <button
         type="button"
+        onClick={onCompose}
         className="mt-4 flex w-full items-center justify-center rounded-lg border border-green-600 bg-white px-4 py-2.5 text-sm font-semibold text-green-700 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500"
       >
         Compose
