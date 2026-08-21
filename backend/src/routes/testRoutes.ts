@@ -105,4 +105,69 @@ async function initSchema(
 router.get("/init-schema", initSchema);
 router.post("/init-schema", initSchema);
 
+// ------------------------------------------------------------
+// READ-ONLY EMAIL INSPECTION
+//
+// Runs the same query from inside the deployed API so the
+// managed MySQL instance can be inspected without the mysql
+// CLI or a private network route. Hardcoded SELECT, no user
+// input reaches SQL.
+// ------------------------------------------------------------
+
+async function listEmails(
+    _req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<Response | void> {
+    try {
+        const [rows] = await pool.query(
+            `
+            SELECT id, recipient_email, scheduled_at, status, job_enqueued,
+                   attempts, error_message
+            FROM emails ORDER BY id
+            `
+        );
+
+        return res.json({ ok: true, emails: rows });
+    } catch (error) {
+        next(error);
+    }
+}
+
+router.get("/db/emails", listEmails);
+
+// ------------------------------------------------------------
+// FORCE-UNSTICK OVERDUE EMAILS
+//
+// Resets job_enqueued back to FALSE for rows that are still
+// 'scheduled', already marked job_enqueued, and past their
+// scheduled_at. The spawner's next tick will re-pick them and
+// enqueue a fresh BullMQ job. Scoped to overdue rows only so it
+// can't touch emails legitimately queued for the future.
+// ------------------------------------------------------------
+
+async function unstickEmails(
+    _req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<Response | void> {
+    try {
+        const [result] = await pool.execute(
+            `
+            UPDATE emails
+            SET job_enqueued = FALSE, updated_at = CURRENT_TIMESTAMP
+            WHERE status = 'scheduled'
+              AND job_enqueued = TRUE
+              AND scheduled_at <= UTC_TIMESTAMP()
+            `
+        );
+
+        return res.json({ ok: true, result });
+    } catch (error) {
+        next(error);
+    }
+}
+
+router.post("/db/unstick", unstickEmails);
+
 export default router;
