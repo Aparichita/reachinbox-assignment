@@ -11,6 +11,11 @@ interface DueEmail extends RowDataPacket {
     scheduled_at: string;
 }
 
+function mysqlUtcDateTime(value: string): Date {
+    const normalized = value.replace(" ", "T");
+    return new Date(`${normalized}Z`);
+}
+
 function utcDateTime(date: Date): string {
     return date.toISOString().slice(0, 19).replace("T", " ");
 }
@@ -68,21 +73,20 @@ const spawnerWorker = new Worker(
         // ----------------------------------------------------
 
         for (const email of rows) {
-            const scheduledTime = new Date(
-                `${email.scheduled_at.replace(" ", "T")}Z`
+            const scheduledTime = mysqlUtcDateTime(email.scheduled_at);
+            const currentTimeMs = Date.now();
+
+            // BullMQ must process past-due emails immediately.
+            const delayMs = Math.max(
+                0,
+                scheduledTime.getTime() - currentTimeMs
             );
-
-            let delayMs =
-                scheduledTime.getTime() - now.getTime();
-
-            // Never give BullMQ a negative delay.
-            // If the scheduled time has already passed,
-            // send the email immediately.
-            delayMs = Math.max(0, delayMs);
 
             console.log(
                 `📨 Spawner enqueueing emailId=${email.id}, ` +
                 `scheduled_at=${email.scheduled_at}, ` +
+                `scheduled_iso=${scheduledTime.toISOString()}, ` +
+                `current_iso=${new Date(currentTimeMs).toISOString()}, ` +
                 `delay=${delayMs}ms`
             );
 
@@ -128,6 +132,7 @@ const spawnerWorker = new Worker(
 
     {
         connection: redisConnection,
+        autorun: false,
     }
 );
 

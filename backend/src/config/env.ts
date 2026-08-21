@@ -59,6 +59,10 @@ export const config = {
         "RETRY_BACKOFF_MS"
     ),
 
+    sendingTimeoutMinutes: requirePositiveInteger(
+        "SENDING_TIMEOUT_MINUTES"
+    ),
+
     spawner: {
         intervalSeconds: requirePositiveInteger(
             "SPAWNER_INTERVAL_SECONDS"

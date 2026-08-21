@@ -343,6 +343,9 @@ const worker = new Worker<EmailJobData>(
             max: 1,
             duration: config.minSendDelayMs,
         },
+
+        // Startup recovery runs before this worker is started.
+        autorun: false,
     }
 );
 
