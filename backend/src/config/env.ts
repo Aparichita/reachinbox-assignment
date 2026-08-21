@@ -47,6 +47,18 @@ export const config = {
         "MAX_EMAILS_PER_HOUR"
     ),
 
+    minSendDelayMs: requirePositiveInteger(
+        "MIN_SEND_DELAY_MS"
+    ),
+
+    maxRetryAttempts: requirePositiveInteger(
+        "MAX_RETRY_ATTEMPTS"
+    ),
+
+    retryBackoffMs: requirePositiveInteger(
+        "RETRY_BACKOFF_MS"
+    ),
+
     spawner: {
         intervalSeconds: requirePositiveInteger(
             "SPAWNER_INTERVAL_SECONDS"
