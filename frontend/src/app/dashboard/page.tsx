@@ -13,8 +13,6 @@ export default async function DashboardPage() {
   return (
     <DashboardShell
       user={session.user ?? {}}
-      scheduledCount={0}
-      sentCount={0}
     />
   );
 }
