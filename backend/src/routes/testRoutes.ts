@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import fs from "fs";
 import path from "path";
-import { addEmailJob, emailQueue } from "../queue/emailQueue";
+import emailQueue, { addEmailJob } from "../queue/emailQueue";
 import pool from "../config/db";
 
 const router = Router();
