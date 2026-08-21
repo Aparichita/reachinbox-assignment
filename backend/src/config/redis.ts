@@ -1,15 +1,15 @@
 import IORedis from "ioredis";
 import { config } from "./env";
 
-const redisConnection = new IORedis({
-    host: config.redis.host,
-    port: config.redis.port,
-
-    // BullMQ requires this to be null.
-    // It prevents ioredis from giving up on commands
-    // while BullMQ is waiting for Redis to respond.
-    maxRetriesPerRequest: null,
-});
+const redisConnection = process.env.REDIS_URL
+    ? new IORedis(process.env.REDIS_URL, {
+        maxRetriesPerRequest: null,
+    })
+    : new IORedis({
+        host: config.redis.host,
+        port: config.redis.port,
+        maxRetriesPerRequest: null,
+    });
 
 redisConnection.on("connect", () => {
     console.log("✅ Redis connected");
