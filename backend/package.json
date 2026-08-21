@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
   "dev": "tsx watch src/index.ts",
-  "dev:worker": "tsx watch src/workers/emailWorker.ts"
+ "dev:worker": "tsx watch src/worker.ts"
 },
   "dependencies": {
     "bullmq": "^6.2.0",

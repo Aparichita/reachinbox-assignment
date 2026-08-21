@@ -1,70 +1,79 @@
 import "dotenv/config";
 
 function requireEnv(name: string): string {
-  const value = process.env[name];
+    const value = process.env[name];
 
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
+    if (!value) {
+        throw new Error(`Missing required environment variable: ${name}`);
+    }
 
-  return value;
+    return value;
 }
 
 function requireNumber(name: string): number {
-  const value = requireEnv(name);
-  const parsed = Number(value);
+    const value = requireEnv(name);
+    const parsed = Number(value);
 
-  if (!Number.isFinite(parsed)) {
-    throw new Error(
-      `Environment variable ${name} must be a valid number. Received: "${value}"`
-    );
-  }
+    if (!Number.isFinite(parsed)) {
+        throw new Error(
+            `Environment variable ${name} must be a valid number. Received: "${value}"`
+        );
+    }
 
-  return parsed;
+    return parsed;
 }
 
-// ------------------------------------------------------------
-// WORKER CONCURRENCY
-// ------------------------------------------------------------
+function requirePositiveInteger(name: string): number {
+    const value = requireNumber(name);
 
-const workerConcurrency = Number(
-  process.env.WORKER_CONCURRENCY ?? 5
-);
+    if (!Number.isInteger(value) || value < 1) {
+        throw new Error(
+            `${name} must be a positive integer. Received: "${value}"`
+        );
+    }
 
-if (!Number.isInteger(workerConcurrency) || workerConcurrency < 1) {
-  throw new Error(
-    "WORKER_CONCURRENCY must be a positive integer"
-  );
+    return value;
 }
-
-// ------------------------------------------------------------
-// APPLICATION CONFIGURATION
-// ------------------------------------------------------------
 
 export const config = {
-  port: requireNumber("PORT"),
-  nodeEnv: requireEnv("NODE_ENV"),
+    port: requireNumber("PORT"),
+    nodeEnv: requireEnv("NODE_ENV"),
 
-  mysql: {
-    host: requireEnv("MYSQL_HOST"),
-    port: requireNumber("MYSQL_PORT"),
-    user: requireEnv("MYSQL_USER"),
-    password: requireEnv("MYSQL_PASSWORD"),
-    database: requireEnv("MYSQL_DATABASE")
-  },
+    workerConcurrency: requirePositiveInteger(
+        "WORKER_CONCURRENCY"
+    ),
 
-  redis: {
-    host: requireEnv("REDIS_HOST"),
-    port: requireNumber("REDIS_PORT")
-  },
+    spawner: {
+        intervalSeconds: requirePositiveInteger(
+            "SPAWNER_INTERVAL_SECONDS"
+        ),
 
-  ethereal: {
-    host: requireEnv("ETHEREAL_HOST"),
-    port: requireNumber("ETHEREAL_PORT"),
-    user: requireEnv("ETHEREAL_USER"),
-    password: requireEnv("ETHEREAL_PASSWORD")
-  },
+        lookaheadMinutes: requirePositiveInteger(
+            "SPAWNER_LOOKAHEAD_MINUTES"
+        ),
 
-  // Number of emails the BullMQ worker can process concurrently.
-  workerConcurrency
+        batchSize: requirePositiveInteger(
+            "SPAWNER_BATCH_SIZE"
+        ),
+    },
+
+    mysql: {
+        host: requireEnv("MYSQL_HOST"),
+        port: requireNumber("MYSQL_PORT"),
+        user: requireEnv("MYSQL_USER"),
+        password: requireEnv("MYSQL_PASSWORD"),
+        database: requireEnv("MYSQL_DATABASE"),
+    },
+
+    redis: {
+        host: requireEnv("REDIS_HOST"),
+        port: requireNumber("REDIS_PORT"),
+    },
+
+    ethereal: {
+        host: requireEnv("ETHEREAL_HOST"),
+        port: requireNumber("ETHEREAL_PORT"),
+        user: requireEnv("ETHEREAL_USER"),
+        password: requireEnv("ETHEREAL_PASSWORD"),
+    },
 } as const;
