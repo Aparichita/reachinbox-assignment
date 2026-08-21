@@ -5,20 +5,13 @@ import { config } from "./config/env";
 import { testConnection } from "./config/db";
 import { errorHandler } from "./middleware/errorHandler";
 
+import campaignRoutes from "./routes/campaignRoutes";
+import emailRoutes from "./routes/emailRoutes";
+
 const app = express();
-
-
-// ------------------------------------------------------------
-// MIDDLEWARE
-// ------------------------------------------------------------
 
 app.use(cors());
 app.use(express.json());
-
-
-// ------------------------------------------------------------
-// HEALTH CHECK
-// ------------------------------------------------------------
 
 app.get("/health", (_req, res) => {
     res.json({
@@ -29,20 +22,17 @@ app.get("/health", (_req, res) => {
 });
 
 
-// ------------------------------------------------------------
-// ERROR HANDLER
-// ------------------------------------------------------------
+// API ROUTES
+app.use("/api/campaigns", campaignRoutes);
+app.use("/api/emails", emailRoutes);
 
+
+// ERROR HANDLER MUST BE LAST
 app.use(errorHandler);
 
 
-// ------------------------------------------------------------
-// START SERVER
-// ------------------------------------------------------------
-
 async function startServer(): Promise<void> {
     try {
-        // Make sure MySQL is reachable before starting.
         await testConnection();
 
         app.listen(config.port, () => {
@@ -50,7 +40,6 @@ async function startServer(): Promise<void> {
         });
     } catch (error) {
         console.error("❌ Failed to start server:", error);
-
         process.exit(1);
     }
 }
