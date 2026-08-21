@@ -10,70 +10,41 @@ export async function addEmailJob(
     emailId: number,
     delayMs: number
 ): Promise<void> {
-    console.log(`BEFORE queue.add emailId=${emailId}`);
+    const job = await emailQueue.add(
+        "send-email",
+        {
+            // Only the ID goes into Redis. The worker re-reads the row
+            // from MySQL, so it always acts on current state rather than
+            // a snapshot taken when the job was created.
+            emailId,
+        },
+        {
+            // BullMQ custom job IDs cannot be integer-only strings.
+            // Deriving the ID from the DB row makes the job idempotent:
+            // the same email cannot create duplicate jobs.
+            jobId: `email-${emailId}`,
 
-    try {
-        const job = await emailQueue.add(
-            "send-email",
-            {
-                emailId,
+            // Wait this long before the job becomes ready.
+            delay: delayMs,
+
+            attempts: config.maxRetryAttempts,
+            backoff: {
+                type: "exponential",
+                delay: config.retryBackoffMs,
             },
-            {
-                // BullMQ custom job IDs cannot be integer-only strings.
-                // Using the DB email ID makes the job idempotent:
-                // the same email cannot create duplicate jobs.
-                jobId: `email-${emailId}`,
 
-                // Wait this long before the job becomes ready.
-                delay: delayMs,
-
-                attempts: config.maxRetryAttempts,
-                backoff: {
-                    type: "exponential",
-                    delay: config.retryBackoffMs,
-                },
-            }
-        );
-
-        console.log(
-            `AFTER queue.add emailId=${emailId}, jobId=${job.id}`
-        );
-
-        if (!job.id) {
-            throw new Error(
-                `queue.add returned no job ID for emailId=${emailId}`
-            );
+            // Completed and failed jobs linger in Redis, and BullMQ
+            // treats a lingering job as "already exists" — so re-adding
+            // the same jobId is silently ignored and the job never
+            // enters the queue. Expiring them keeps jobId reuse safe.
+            removeOnComplete: { age: 3600 },
+            removeOnFail: { age: 86400 },
         }
+    );
 
-        console.log(
-            "Queue counts:",
-            await emailQueue.getJobCounts()
-        );
-
-        const [waiting, active, delayed] = await Promise.all([
-            emailQueue.getWaiting(),
-            emailQueue.getActive(),
-            emailQueue.getDelayed(),
-        ]);
-
-        console.log("Queue state snapshot:", {
-            waiting: waiting.map((item) => item.id),
-            active: active.map((item) => item.id),
-            delayed: delayed.map((item) => item.id),
-        });
-
-        const check = await emailQueue.getJob(job.id);
-
-        console.log(
-            `Redis job check: jobId=${job.id}, exists=${!!check}`
-        );
-    } catch (error) {
-        console.error(
-            `❌ queue.add failed for emailId=${emailId}:`,
-            error
-        );
-        throw error;
-    }
+    console.log(
+        `Enqueued emailId=${emailId} jobId=${job.id} delay=${delayMs}ms`
+    );
 }
 
 export default emailQueue;
