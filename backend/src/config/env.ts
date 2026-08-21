@@ -23,6 +23,24 @@ function requireNumber(name: string): number {
   return parsed;
 }
 
+// ------------------------------------------------------------
+// WORKER CONCURRENCY
+// ------------------------------------------------------------
+
+const workerConcurrency = Number(
+  process.env.WORKER_CONCURRENCY ?? 5
+);
+
+if (!Number.isInteger(workerConcurrency) || workerConcurrency < 1) {
+  throw new Error(
+    "WORKER_CONCURRENCY must be a positive integer"
+  );
+}
+
+// ------------------------------------------------------------
+// APPLICATION CONFIGURATION
+// ------------------------------------------------------------
+
 export const config = {
   port: requireNumber("PORT"),
   nodeEnv: requireEnv("NODE_ENV"),
@@ -45,5 +63,8 @@ export const config = {
     port: requireNumber("ETHEREAL_PORT"),
     user: requireEnv("ETHEREAL_USER"),
     password: requireEnv("ETHEREAL_PASSWORD")
-  }
+  },
+
+  // Number of emails the BullMQ worker can process concurrently.
+  workerConcurrency
 } as const;
