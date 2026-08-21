@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import fs from "fs";
 import path from "path";
-import { addEmailJob } from "../queue/emailQueue";
+import { addEmailJob, emailQueue } from "../queue/emailQueue";
 import pool from "../config/db";
 
 const router = Router();
@@ -168,6 +168,43 @@ async function unstickEmails(
     }
 }
 
+router.get("/db/unstick", unstickEmails);
 router.post("/db/unstick", unstickEmails);
+
+// ------------------------------------------------------------
+// CLEAR COMPLETED / FAILED BULLMQ JOBS
+//
+// jobId-based idempotency has a subtle failure mode: BullMQ treats a
+// COMPLETED job as still existing, so re-adding the same jobId is
+// silently ignored and the job never enters the queue. Old completed
+// jobs from earlier test runs therefore block legitimate re-enqueues,
+// which shows up as "job exists=true" but zero waiting/delayed/active.
+//
+// Permanent fix is removeOnComplete with a TTL in the job options;
+// this endpoint clears the backlog that predates that.
+// ------------------------------------------------------------
+
+async function clearCompleted(
+    _req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<Response | void> {
+    try {
+        const completed = await emailQueue.clean(0, 1000, "completed");
+        const failed = await emailQueue.clean(0, 1000, "failed");
+
+        return res.json({
+            ok: true,
+            removedCompleted: completed.length,
+            removedFailed: failed.length,
+            counts: await emailQueue.getJobCounts(),
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+router.get("/queue/clear-completed", clearCompleted);
+router.post("/queue/clear-completed", clearCompleted);
 
 export default router;
