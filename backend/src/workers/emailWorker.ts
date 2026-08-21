@@ -1,6 +1,6 @@
 import { Job, Worker } from "bullmq";
+import IORedis from "ioredis";
 import { ResultSetHeader, RowDataPacket } from "mysql2";
-import redisConnection from "../config/redis";
 import { config } from "../config/env";
 import pool from "../config/db";
 import { sendEmail, verifyMailer } from "../services/mailer";
@@ -50,6 +50,45 @@ function nextWindowSchedule(email: EmailRow): Date {
             email.slot_index * email.delay_seconds * 1000
     );
 }
+
+// -------------------------------------------------------------
+// DEDICATED REDIS CONNECTION FOR BULLMQ EMAIL WORKER
+//
+// BullMQ Workers use blocking commands and internally duplicate
+// their connection. Sharing the app-wide singleton with the Queue
+// and the rate limiter can hit connection limits on managed Redis,
+// where the failure is invisible because it happens on the
+// duplicated connection, below our error handlers.
+// -------------------------------------------------------------
+
+const workerConnection = process.env.REDIS_URL
+    ? new IORedis(process.env.REDIS_URL, {
+          maxRetriesPerRequest: null,
+      })
+    : new IORedis({
+          host: config.redis.host,
+          port: config.redis.port,
+          maxRetriesPerRequest: null,
+      });
+
+console.log(
+    `Email worker Redis target: ` +
+        `host=${workerConnection.options.host ?? "unknown"}, ` +
+        `port=${workerConnection.options.port ?? "unknown"}, ` +
+        `db=${workerConnection.options.db ?? 0}, ` +
+        `urlConfigured=${Boolean(process.env.REDIS_URL)}`
+);
+
+workerConnection.on("ready", () => {
+    console.log("✅ Email worker Redis connection ready");
+});
+
+workerConnection.on("error", (error) => {
+    console.error(
+        "❌ Email worker Redis connection error:",
+        error
+    );
+});
 
 const worker = new Worker<EmailJobData>(
     "email-queue",
@@ -105,19 +144,10 @@ const worker = new Worker<EmailJobData>(
 
         // ---------------------------------------------------------
         // 3. ATOMICALLY CLAIM THE EMAIL
+        //
+        // Compare-and-swap: the row is either ours or it isn't.
+        // No gap between checking and taking.
         // ---------------------------------------------------------
-        //
-        // Instead of:
-        //
-        // SELECT status
-        // UPDATE status='sending'
-        //
-        // we do the check + update in ONE SQL statement.
-        //
-        // This is a compare-and-swap: change status from scheduled to
-        // sending only if the current value is still scheduled.
-        // If another worker already claimed it, affectedRows = 0.
-        //
 
         const [claimResult] =
             await pool.execute<ResultSetHeader>(
@@ -143,6 +173,9 @@ const worker = new Worker<EmailJobData>(
 
         // ---------------------------------------------------------
         // 4. RATE LIMIT
+        //
+        // Claim happens BEFORE this, so only the worker that owns
+        // the row consumes a slot. Otherwise the counter drifts.
         // ---------------------------------------------------------
 
         const hourlyLimit =
@@ -155,6 +188,10 @@ const worker = new Worker<EmailJobData>(
 
         // ---------------------------------------------------------
         // 5. RATE LIMIT REACHED -> DEFER
+        //
+        // Returns cleanly rather than throwing, so a deferral never
+        // consumes a retry attempt. Status goes back to 'scheduled'
+        // or the row would be stranded as 'sending' forever.
         // ---------------------------------------------------------
 
         if (!rateLimit.allowed) {
@@ -176,19 +213,12 @@ const worker = new Worker<EmailJobData>(
 
             console.log(
                 `Rate limit ${rateLimit.used}/${rateLimit.limit} ` +
-                `reached for ${email.sender_email}. ` +
-                `Deferred emailId=${emailId} ` +
-                `from ${email.scheduled_at} ` +
-                `to ${newScheduledAt.toISOString()}`
+                    `reached for ${email.sender_email}. ` +
+                    `Deferred emailId=${emailId} ` +
+                    `from ${email.scheduled_at} ` +
+                    `to ${newScheduledAt.toISOString()}`
             );
 
-            // IMPORTANT:
-            // Do NOT throw.
-            //
-            // Therefore:
-            // - BullMQ does not count this as a failure
-            // - no retry attempt is consumed
-            // - the spawner will pick it up next hour
             return;
         }
 
@@ -199,7 +229,7 @@ const worker = new Worker<EmailJobData>(
         try {
             console.log(
                 `Sending emailId=${emailId} ` +
-                `to ${email.recipient_email}`
+                    `to ${email.recipient_email}`
             );
 
             const previewUrl = await sendEmail(
@@ -245,28 +275,15 @@ const worker = new Worker<EmailJobData>(
             const maxAttempts =
                 job.opts.attempts ?? 1;
 
-            /*
-             * BullMQ's attemptsMade is zero-based while the job
-             * is currently executing.
-             *
-             * First attempt:
-             * attemptsMade = 0
-             *
-             * Second attempt:
-             * attemptsMade = 1
-             *
-             * Therefore:
-             *
-             * attemptsMade + 1 >= maxAttempts
-             *
-             * means this is the final attempt.
-             */
-
             const isFinalAttempt =
                 job.attemptsMade + 1 >= maxAttempts;
 
             // -----------------------------------------------------
             // 9. UPDATE DATABASE ACCORDING TO RETRY STATE
+            //
+            // Only mark 'failed' on the last attempt. A row that
+            // fails attempt 1 and succeeds on attempt 2 should never
+            // have been marked failed in between.
             // -----------------------------------------------------
 
             if (isFinalAttempt) {
@@ -288,7 +305,7 @@ const worker = new Worker<EmailJobData>(
 
                 console.error(
                     `emailId=${emailId} permanently failed ` +
-                    `after ${maxAttempts} attempt(s): ${errorMessage}`
+                        `after ${maxAttempts} attempt(s): ${errorMessage}`
                 );
             } else {
                 await pool.execute<ResultSetHeader>(
@@ -309,43 +326,45 @@ const worker = new Worker<EmailJobData>(
 
                 console.error(
                     `emailId=${emailId} failed. ` +
-                    `BullMQ will retry. ` +
-                    `Attempt ${job.attemptsMade + 1}/${maxAttempts}: ` +
-                    `${errorMessage}`
+                        `BullMQ will retry. ` +
+                        `Attempt ${job.attemptsMade + 1}/${maxAttempts}: ` +
+                        `${errorMessage}`
                 );
             }
 
-            // Throw so BullMQ knows the email send failed
-            // and can perform its configured retry.
+            // Tell BullMQ the job failed so it can retry.
             throw error;
         }
     },
 
     {
-        connection: redisConnection,
+        // ---------------------------------------------------------
+        // DEDICATED REDIS CONNECTION
+        // ---------------------------------------------------------
+
+        connection: workerConnection,
 
         // ---------------------------------------------------------
-        // STEP 11: WORKER CONCURRENCY
+        // WORKER CONCURRENCY
         // ---------------------------------------------------------
 
         concurrency: config.workerConcurrency,
 
         // ---------------------------------------------------------
-        // STEP 11: MINIMUM SEND DELAY
+        // MINIMUM SEND DELAY
+        //
+        // Concurrency is how many jobs can be in flight; the limiter
+        // is how fast jobs are allowed through. max:1 per 2000ms
+        // means sends start ~2s apart regardless of concurrency.
         // ---------------------------------------------------------
-        //
-        // Even though multiple jobs can be processed concurrently,
-        // BullMQ will allow only one job to pass this limiter during
-        // each duration window.
-        //
 
         limiter: {
             max: 1,
             duration: config.minSendDelayMs,
         },
 
-        // Startup recovery runs before this worker is started.
-        autorun: false,
+        // The worker starts consuming as soon as this module loads.
+        autorun: true,
     }
 );
 
@@ -383,6 +402,12 @@ console.log(
 
 // -------------------------------------------------------------
 // VERIFY SMTP
+//
+// Log failures but do NOT exit. On a container platform an exit
+// here produces a silent crash-loop: the process dies before it
+// can consume anything, restarts, dies again, and no useful error
+// ever surfaces. Staying up means individual sends fail visibly
+// with a stored error_message instead.
 // -------------------------------------------------------------
 
 verifyMailer().catch((error) => {
@@ -390,8 +415,9 @@ verifyMailer().catch((error) => {
         "Ethereal SMTP verification failed:",
         error
     );
-
-    process.exit(1);
+    console.error(
+        "Worker will stay up; sends will fail until credentials are fixed."
+    );
 });
 
 export default worker;
