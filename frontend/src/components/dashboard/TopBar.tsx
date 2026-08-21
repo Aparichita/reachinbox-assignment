@@ -27,7 +27,7 @@ export default function TopBar({ onRefresh, refreshing = false }: TopBarProps) {
         type="button"
         aria-label="Filter"
         title="Filter"
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 transition hover:border-zinc-300 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-green-500"
+        className="interactive-icon h-10 w-10 shrink-0"
       >
         <Filter className="h-4 w-4" />
       </button>
@@ -37,7 +37,7 @@ export default function TopBar({ onRefresh, refreshing = false }: TopBarProps) {
         title="Refresh"
         onClick={onRefresh}
         disabled={refreshing}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 transition hover:border-zinc-300 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-green-500"
+        className="interactive-icon h-10 w-10 shrink-0"
       >
         <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
       </button>

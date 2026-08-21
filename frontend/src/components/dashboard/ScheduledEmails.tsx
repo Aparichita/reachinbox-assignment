@@ -61,9 +61,14 @@ export default function ScheduledEmails({ state }: ScheduledEmailsProps) {
       {error ? (
         <div className="flex items-center justify-between gap-4 bg-red-50 px-4 py-3 text-xs text-red-700">
           <span>{error}</span>
-          <button type="button" onClick={() => void refetch()} className="font-semibold underline">
+          <Button
+            type="button"
+            variant="link"
+            className="shrink-0 text-xs text-red-700 hover:text-red-800"
+            onClick={() => void refetch()}
+          >
             Retry
-          </button>
+          </Button>
         </div>
       ) : null}
     </div>

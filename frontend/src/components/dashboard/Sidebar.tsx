@@ -95,7 +95,7 @@ export default function Sidebar({
         <button
           type="button"
           onClick={() => setMenuOpen((open) => !open)}
-          className="flex w-full items-center gap-3 rounded-xl border border-zinc-200 p-3 text-left transition hover:border-zinc-300 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="interactive flex w-full cursor-pointer items-center gap-3 rounded-xl border border-zinc-200 p-3 text-left hover:border-zinc-300 hover:bg-zinc-50"
           aria-label="Open account options"
           aria-expanded={menuOpen}
           aria-haspopup="menu"
@@ -145,13 +145,14 @@ export default function Sidebar({
         ) : null}
       </div>
 
-      <button
+      <Button
         type="button"
+        variant="outline"
+        className="mt-4 w-full"
         onClick={onCompose}
-        className="mt-4 flex w-full items-center justify-center rounded-lg border border-green-600 bg-white px-4 py-2.5 text-sm font-semibold text-green-700 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500"
       >
         Compose
-      </button>
+      </Button>
 
       <div className="mt-10">
         <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-400">
@@ -166,7 +167,7 @@ export default function Sidebar({
                 key={tab}
                 type="button"
                 onClick={() => onTabChange(tab)}
-                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                className={`interactive flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm active:scale-100 ${
                   isActive
                     ? "bg-green-50 font-semibold text-green-800"
                     : "text-zinc-700 hover:bg-zinc-50"

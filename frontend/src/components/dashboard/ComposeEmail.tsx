@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, Upload, X } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Spinner from "@/components/ui/Spinner";
@@ -75,7 +75,7 @@ function RecipientChip({
       <button
         type="button"
         onClick={onRemove}
-        className="rounded-full p-0.5 text-green-700 transition hover:bg-green-100 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500"
+        className="interactive cursor-pointer rounded-full p-0.5 text-green-700 hover:bg-green-100 hover:text-green-900"
         aria-label={`Remove ${email}`}
       >
         <X className="h-3 w-3" />
@@ -256,7 +256,7 @@ export default function ComposeEmail({
           <button
             type="button"
             onClick={onBack}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="interactive-icon h-10 w-10 shrink-0"
             aria-label="Back to email list"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -327,13 +327,14 @@ export default function ComposeEmail({
                 event.target.value = "";
               }}
             />
-            <button
+            <Button
               type="button"
+              variant="link"
               onClick={() => fileInputRef.current?.click()}
-              className="shrink-0 text-sm font-semibold text-green-700 transition hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-500"
             >
+              <Upload className="h-4 w-4" />
               Upload List
-            </button>
+            </Button>
           </div>
 
           {recipients.length > 0 ? (
@@ -354,7 +355,7 @@ export default function ComposeEmail({
                   <button
                     type="button"
                     onClick={() => setRecipientsExpanded(true)}
-                    className="inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-800 transition hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="interactive inline-flex cursor-pointer items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-800 hover:bg-green-100"
                   >
                     +{hiddenCount}
                   </button>
@@ -363,7 +364,7 @@ export default function ComposeEmail({
                   <button
                     type="button"
                     onClick={() => setRecipientsExpanded(false)}
-                    className="text-xs font-medium text-zinc-500 transition hover:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="interactive cursor-pointer text-xs font-medium text-zinc-500 hover:text-zinc-700 active:scale-100"
                   >
                     Show less
                   </button>
@@ -437,8 +438,7 @@ export default function ComposeEmail({
             <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
-                variant="ghost"
-                className="px-3 py-2 text-xs"
+                variant="pill"
                 onClick={() =>
                   setStartTimeLocal(getInMinutesPreset(5))
                 }
@@ -447,8 +447,7 @@ export default function ComposeEmail({
               </Button>
               <Button
                 type="button"
-                variant="ghost"
-                className="px-3 py-2 text-xs"
+                variant="pill"
                 onClick={() =>
                   setStartTimeLocal(getTomorrowAtPreset(10, 0))
                 }

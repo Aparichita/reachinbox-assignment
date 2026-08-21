@@ -22,16 +22,16 @@ export default function EmailRow({ email }: EmailRowProps) {
         </span>
         {sentEmail ? (
           <span
-            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+            className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
               isFailed
-                ? "bg-red-50 text-red-700"
-                : "bg-green-50 text-green-700"
+                ? "border-red-200 bg-red-50 text-red-700"
+                : "border-zinc-200 bg-zinc-100 text-zinc-600"
             }`}
           >
             {isFailed ? "Failed" : "Sent"}
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">
             <Clock3 className="h-3.5 w-3.5" />
             {formatUtcDateTime(email.scheduled_at)}
           </span>
@@ -63,7 +63,7 @@ export default function EmailRow({ email }: EmailRowProps) {
         href={email.preview_url}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-4 border-b border-zinc-200 bg-white px-4 py-4 transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500"
+        className="interactive flex cursor-pointer items-center gap-4 border-b border-zinc-200 bg-white px-4 py-4 hover:bg-zinc-100/70 focus-visible:ring-inset"
       >
         {content}
       </a>
@@ -71,7 +71,7 @@ export default function EmailRow({ email }: EmailRowProps) {
   }
 
   return (
-    <div className="flex items-center gap-4 border-b border-zinc-200 bg-white px-4 py-4 transition hover:bg-zinc-50">
+    <div className="flex items-center gap-4 border-b border-zinc-200 bg-white px-4 py-4 transition hover:bg-zinc-100/70">
       {content}
     </div>
   );

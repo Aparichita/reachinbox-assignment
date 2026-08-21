@@ -68,8 +68,7 @@ export default function LoginPage() {
 
         <Button
           type="button"
-          variant="ghost"
-          className="w-full gap-3 border border-zinc-200 bg-white text-[#111111] hover:bg-zinc-50"
+          variant="google"
           onClick={() => signIn("google")}
         >
           <GoogleIcon />

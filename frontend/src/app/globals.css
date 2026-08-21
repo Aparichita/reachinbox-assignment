@@ -15,3 +15,14 @@ button,
 input {
   font: inherit;
 }
+
+@layer components {
+  .interactive {
+    @apply cursor-pointer transition focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 active:scale-[0.98];
+  }
+
+  .interactive-icon {
+    @apply cursor-pointer transition focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 active:scale-[0.98];
+    @apply flex items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
+  }
+}

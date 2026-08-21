@@ -1,16 +1,31 @@
 import type { ButtonHTMLAttributes } from "react";
 
-export type ButtonVariant = "primary" | "outline" | "ghost";
+export type ButtonVariant =
+  | "primary"
+  | "outline"
+  | "ghost"
+  | "link"
+  | "pill"
+  | "google";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
 };
 
+const baseClasses =
+  "inline-flex items-center justify-center font-semibold transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 active:scale-[0.98]";
+
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "bg-green-600 text-white hover:bg-green-700",
+  primary:
+    "rounded-lg bg-green-600 px-4 py-2.5 text-sm text-white hover:bg-green-700",
   outline:
-    "border border-green-600 bg-white text-green-700 hover:bg-green-50",
-  ghost: "bg-transparent text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900",
+    "rounded-lg border border-green-600 bg-white px-4 py-2.5 text-sm text-green-700 hover:bg-green-50",
+  ghost:
+    "rounded-lg bg-transparent px-4 py-2.5 text-sm text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900",
+  link: "gap-1.5 rounded-none bg-transparent px-0 py-0 text-sm text-green-700 hover:text-green-800 hover:underline active:scale-100",
+  pill: "rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:border-green-600 hover:bg-green-50 hover:text-green-800",
+  google:
+    "w-full gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm text-[#111111] shadow-sm hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md active:translate-y-0 active:shadow-sm",
 };
 
 export default function Button({
@@ -20,7 +35,7 @@ export default function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${className}`}
+      className={`${baseClasses} ${variantClasses[variant]} ${className}`}
       {...props}
     />
   );
