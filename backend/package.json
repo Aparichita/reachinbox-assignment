@@ -4,9 +4,11 @@
   "description": "ReachInbox email scheduler backend",
   "main": "dist/index.js",
   "scripts": {
-  "dev": "tsx watch src/index.ts",
- "dev:worker": "tsx watch src/worker.ts"
-},
+    "dev": "tsx watch src/index.ts",
+    "dev:worker": "tsx watch src/worker.ts",
+    "start": "tsx src/index.ts",
+    "start:worker": "tsx src/worker.ts"
+  },
   "dependencies": {
     "bullmq": "^6.2.0",
     "cors": "^2.8.5",
@@ -14,14 +16,14 @@
     "express": "^5.1.0",
     "ioredis": "^6.0.0",
     "mysql2": "^3.23.4",
-    "nodemailer": "^9.0.5"
+    "nodemailer": "^9.0.5",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.3",
     "@types/node": "^22.15.30",
-    "@types/nodemailer": "^8.0.1",
-    "tsx": "^4.19.4",
-    "typescript": "^5.8.3"
+    "@types/nodemailer": "^8.0.1"
   }
 }

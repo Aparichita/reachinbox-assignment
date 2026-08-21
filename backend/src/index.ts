@@ -10,7 +10,16 @@ import emailRoutes from "./routes/emailRoutes";
 import testRoutes from "./routes/testRoutes";
 const app = express();
 
-app.use(cors());
+
+// Comma-separated list of allowed frontend origins.
+// Falls back to permissive in local dev where the var isn't set.
+const allowedOrigins = process.env.CORS_ORIGINS?.split(",").map(o => o.trim());
+
+app.use(cors({
+    origin: allowedOrigins ?? true,
+}));
+
+
 app.use(express.json());
 
 app.get("/health", (_req, res) => {
