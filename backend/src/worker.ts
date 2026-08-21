@@ -12,10 +12,7 @@ async function startWorkers(): Promise<void> {
         await recoverStuckSendingEmails();
         await ensureSpawnerRunning();
 
-        void emailWorker.run().catch((error) => {
-            console.error("❌ Email worker failed to start:", error);
-        });
-
+        
         void spawnerWorker.run().catch((error) => {
             console.error("❌ Spawner worker failed to start:", error);
         });
