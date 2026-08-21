@@ -1,0 +1,37 @@
+import {
+  Filter,
+  RefreshCw,
+  Search,
+} from "lucide-react";
+
+export default function TopBar() {
+  return (
+    <header className="flex items-center gap-3 border-b border-zinc-200 bg-[#f7f7f5] px-6 py-5 lg:px-8">
+      <label className="relative min-w-0 flex-1">
+        <span className="sr-only">Search</span>
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+        <input
+          type="search"
+          placeholder="Search"
+          className="h-10 w-full rounded-lg border border-zinc-200 bg-white pl-10 pr-4 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-green-500 focus:ring-2 focus:ring-green-100"
+        />
+      </label>
+      <button
+        type="button"
+        aria-label="Filter"
+        title="Filter"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 transition hover:border-zinc-300 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-green-500"
+      >
+        <Filter className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        aria-label="Refresh"
+        title="Refresh"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 transition hover:border-zinc-300 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-green-500"
+      >
+        <RefreshCw className="h-4 w-4" />
+      </button>
+    </header>
+  );
+}

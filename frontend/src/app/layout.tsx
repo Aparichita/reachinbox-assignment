@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "ReachInbox",
-  description: "ReachInbox authentication",
+  description: "ReachInbox email workspace",
 };
 
 export default function RootLayout({
