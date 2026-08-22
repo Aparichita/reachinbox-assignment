@@ -6,7 +6,8 @@ Built for the Outbox Labs SDE Internship assignment.
 
 **Live frontend:** `https://reachinbox-frontend-mu.vercel.app/`
 **Live API:** `https://reachinbox-api-production-0367.up.railway.app`
-**Demo video:** `<your-loom-or-drive-link>`
+**Demo video:** `https://www.loom.com/share/dd7820a5389d4ded854c8e80c74a2fa6`
+`https://www.loom.com/share/5f9c98acbbd54f09ab3962695ff14f84`
 
 ---
 
